@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sysmex system 구성</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--line:#dfe3e8;--txt:#1f2933;--sub:#6b7280;--acc:#00a651;--acc2:#0d6efd}
+*{box-sizing:border-box}body{margin:0;font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+header{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}header .hint{color:var(--sub);font-size:12px;line-height:1.5}
+main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;min-height:calc(100vh - 56px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--sub);font-weight:600;letter-spacing:.02em}
+.palette{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}
+.pal{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;background:#fff;-webkit-tap-highlight-color:rgba(13,110,253,.15)}
+.pal:hover{border-color:var(--acc2);background:#f5f9ff}
+.pal img{height:56px;width:70px;object-fit:contain;flex:none}
+.pal .nm{flex:1;min-width:0}.pal .t{font-weight:600}.pal .id{font-size:11px;color:var(--sub)}
+.pal button{border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:6px;padding:6px 8px;cursor:pointer;font-weight:700}
+.right{display:flex;flex-direction:column;gap:16px}
+.line{display:flex;gap:8px;flex-wrap:wrap;min-height:74px;padding:8px;border:2px dashed var(--line);border-radius:8px;align-items:center}
+.line.over{border-color:var(--acc2);background:#f5f9ff}
+.line:empty::before{content:"모듈 목록에서 카드를 눌러 추가하세요";color:var(--sub)}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;cursor:grab}
+.chip img{height:44px;width:50px;object-fit:contain}.chip .t{font-size:12px;font-weight:600;white-space:nowrap}
+.chip .n{font-size:10px;color:var(--sub)}
+.chip .ops{display:flex;flex-direction:column;gap:2px}.chip .ops button{border:1px solid var(--line);background:#fafafa;border-radius:4px;font-size:11px;padding:1px 5px;cursor:pointer;line-height:1.3}
+.chip .ops button:hover{background:#eee}
+.chip.dragging{opacity:.4}
+.ins{width:4px;height:56px;border-radius:2px;background:var(--acc2);box-shadow:0 0 0 2px #fff;flex:none}
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.toolbar label{display:flex;align-items:center;gap:6px;color:var(--sub)}
+.toolbar select,.toolbar input[type=number]{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+button.primary{background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
+button.ghost{background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font:inherit;cursor:pointer}
+button.ghost:hover{background:#f3f4f6}
+.preview{overflow:auto;background:repeating-conic-gradient(#f0f0f0 0 25%,#fff 0 50%) 0 0/20px 20px;border-radius:8px;padding:8px;text-align:center}
+.preview canvas{max-width:100%;height:auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.preview.zoomed canvas{max-width:none}
+.meta{font-size:12px;color:var(--sub)}
+.dir{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.dir button{border:none;background:#fff;padding:6px 10px;cursor:pointer;font:inherit}.dir button.on{background:var(--acc2);color:#fff}
+.catbar{display:flex;align-items:center;gap:10px;padding:6px 12px;background:#f0f4ff;border:1px solid #c7d7ff;border-radius:10px}
+.catlbl{font-size:13px;font-weight:700;color:#1d4ed8}
+.cats{display:inline-flex;border:2px solid var(--acc2);border-radius:8px;overflow:hidden}
+.catbtn{border:none;background:#fff;color:var(--acc2);padding:8px 18px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.catbtn.on{background:var(--acc2);color:#fff}
+kbd{background:#eee;border-radius:3px;padding:0 4px;font-size:11px}
+@media(max-width:900px){
+  main{grid-template-columns:1fr;gap:10px;padding:10px;min-height:0}
+  main>section,.card,.right{min-width:0;max-width:100%}
+  body{overflow-x:hidden}
+  header{padding:10px 12px;gap:8px}header h1{font-size:16px}header .hint{display:none}
+  .catbar{width:100%;justify-content:space-between;padding:6px 10px}.cats{flex:1;margin-left:8px}.catbtn{flex:1;padding:8px 6px;font-size:14px}
+  header .meta[style]{display:none}
+  .card{padding:10px}
+  /* 모듈 목록: 가로 스크롤 카드 띠 */
+  .palette{width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none;gap:8px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .pal{flex:0 0 auto;flex-direction:column;width:96px;padding:6px 4px;text-align:center;gap:4px;scroll-snap-align:start}
+  .pal img{height:56px;width:80px}.pal .t{font-size:11px;line-height:1.2;white-space:normal}.pal .id{display:none}.pal button{display:none}
+  /* 라인 카드: 작게, 버튼은 가로 배치 */
+  .chip{padding:4px}.chip img{height:36px;width:40px}.chip .t{font-size:11px}.chip .n{display:none}
+  .chip .ops{flex-direction:row}.chip .ops button{padding:4px 7px;font-size:12px}
+  .card h2{font-size:13px}.card h2 .meta{display:none}
+  .toolbar{gap:8px}.toolbar label{font-size:12px}.toolbar select,.toolbar input[type=number]{padding:6px}
+  #zoom,label:has(#zoom){display:none}
+  button.primary,button.ghost{padding:10px 12px}
+  .preview{padding:4px}
+}
+.nojs{background:#fff3cd;color:#7a5b00;padding:10px 14px;font-size:13px;border-bottom:1px solid #ffe08a}
+</style></head><body>
+<noscript><div class="nojs">이 뷰어에서는 스크립트가 실행되지 않아 동작하지 않습니다. 파일을 Safari 또는 Chrome으로 열어 주세요.</div></noscript>
+<header><h1 id="title">Sysmex system 구성</h1>
+<div class="catbar"><span class="catlbl">카테고리</span><div class="cats"><button class="catbtn on" data-cat="xr">XR-System</button><button class="catbtn" data-cat="uf">UF-System</button></div></div><span class="hint">모듈 카드를 클릭하면 라인에 추가됩니다.<br>순서대로 추가하면 XR-9000 구성처럼 한 장으로 정리됩니다.</span><span class="meta" style="margin-left:auto;font-weight:600">만든이 : FSS Team</span></header>
+<main>
+<section class="card">
+  <h2>모듈 목록</h2>
+  <div class="palette" id="palette"><div class="pal" draggable="true" data-id="st4x" onclick="void 0"><img src="img/thumb/st4x.png"><div class="nm"><div class="t">ST-4X</div><div class="id">103 × 355 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="st4xm" onclick="void 0"><img src="img/thumb/st4xm.png"><div class="nm"><div class="t">ST-4X + 모니터</div><div class="id">103 × 583 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bt40" onclick="void 0"><img src="img/thumb/bt40.png"><div class="nm"><div class="t">BT-40</div><div class="id">104 × 384 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bt50" onclick="void 0"><img src="img/thumb/bt50.png"><div class="nm"><div class="t">BT-50</div><div class="id">501 × 1196 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bt50m" onclick="void 0"><img src="img/thumb/bt50m.png"><div class="nm"><div class="t">BT-50 + 모니터</div><div class="id">501 × 1196 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="cv50" onclick="void 0"><img src="img/thumb/cv50.png"><div class="nm"><div class="t">CV-50 (XR 1대)</div><div class="id">247 × 603 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="cv50m" onclick="void 0"><img src="img/thumb/cv50m.png"><div class="nm"><div class="t">CV-50 + 모니터</div><div class="id">247 × 603 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="cv55" onclick="void 0"><img src="img/thumb/cv55.png"><div class="nm"><div class="t">CV-55 (XR 2대)</div><div class="id">387 × 601 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="cv55m" onclick="void 0"><img src="img/thumb/cv55m.png"><div class="nm"><div class="t">CV-55 + 모니터</div><div class="id">388 × 603 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="gr01" onclick="void 0"><img src="img/thumb/gr01.png"><div class="nm"><div class="t">GR-01</div><div class="id">672 × 1121 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="sp50" onclick="void 0"><img src="img/thumb/sp50.png"><div class="nm"><div class="t">SP-50</div><div class="id">677 × 1192 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="sp50di60" onclick="void 0"><img src="img/thumb/sp50di60.png"><div class="nm"><div class="t">SP-50+DI-60</div><div class="id">675 × 604 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="cv70" onclick="void 0"><img src="img/thumb/cv70.png"><div class="nm"><div class="t">CV-70</div><div class="id">249 × 356 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="ts10" onclick="void 0"><img src="img/thumb/ts10.png"><div class="nm"><div class="t">TS-10</div><div class="id">1198 × 1322 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="ta01" onclick="void 0"><img src="img/thumb/ta01.png"><div class="nm"><div class="t">TA-01</div><div class="id">500 × 1196 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="ts01" onclick="void 0"><img src="img/thumb/ts01.png"><div class="nm"><div class="t">TS-01</div><div class="id">150 × 604 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bsw1" onclick="void 0"><img src="img/thumb/bsw1.png"><div class="nm"><div class="t">BSW (CN 1대)</div><div class="id">820 × 531 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bsw2" onclick="void 0"><img src="img/thumb/bsw2.png"><div class="nm"><div class="t">BSW (CN 2대)</div><div class="id">1325 × 531 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bsw3" onclick="void 0"><img src="img/thumb/bsw3.png"><div class="nm"><div class="t">BSW (CN 3대)</div><div class="id">1828 × 531 px</div></div><button title="추가">+</button></div><div class="pal" draggable="true" data-id="bswst" onclick="void 0"><img src="img/thumb/bswst.png"><div class="nm"><div class="t">ST-4X 2대 (BSW)</div><div class="id">216 × 358 px</div></div><button title="추가">+</button></div></div>
+</section>
+<section class="right">
+  <div class="card">
+    <h2><span id="lineTitle">XR-System 라인 구성</span> <span class="meta">— 입력 순서 기준:</span>
+      <span class="dir"><button id="dirR" class="on">우측부터</button><button id="dirL">좌측부터</button></span>
+      <span class="meta">(카드를 드래그해서 순서 변경 · ◀ ▶ 버튼도 가능)</span></h2>
+    <div class="line" id="line"></div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="ghost" id="clear">비우기</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>미리보기 / 저장</h2>
+    <div class="toolbar" style="margin-bottom:10px">
+      <label>해상도 <select id="scale"><option value="1">1x (기본)</option><option value="2" selected>2x (고화질)</option><option value="3">3x</option></select></label>
+      <label>여백 <input type="number" id="pad" value="40" min="0" max="400" style="width:70px">px</label>
+      <label>배경 <select id="bgsel"><option value="#eceff3" selected>연회색</option><option value="#dfe4ea">회색</option><option value="#ffffff">흰색</option><option value="custom">직접 선택</option></select> <input type="color" id="bgcol" value="#eceff3" style="width:36px;height:28px;padding:0;border:1px solid var(--line);border-radius:4px"></label>
+      <label><input type="checkbox" id="sep" checked> 모듈 구분선</label>
+      <label>보기 <select id="zoom"><option value="fit" selected>화면 맞춤</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option></select></label>
+      <button class="primary" id="save">PNG 저장</button>
+      <button class="ghost" id="copy">클립보드 복사</button>
+      <span class="meta" id="info"></span>
+    </div>
+    <div class="preview"><canvas id="cv"></canvas></div>
+  </div>
+</section>
+</main>
+<script>
+const MODS = [{"id": "st4x", "name": "ST-4X", "w": 105, "h": 355, "s": 1, "cabL": 1, "cabR": 104, "strip": 79, "cat": "xr", "src": "img/st4x.png", "thumb": "img/thumb/st4x.png"}, {"id": "st4xm", "name": "ST-4X + 모니터", "w": 221, "h": 583, "s": 1, "cabL": 74, "cabR": 177, "strip": 307, "cat": "xr", "src": "img/st4xm.png", "thumb": "img/thumb/st4xm.png"}, {"id": "bt40", "name": "BT-40", "w": 105, "h": 384, "s": 1, "cabL": 0, "cabR": 104, "strip": 108, "cat": "xr", "src": "img/bt40.png", "thumb": "img/thumb/bt40.png"}, {"id": "bt50", "name": "BT-50", "w": 525, "h": 1196, "s": 2, "cabL": 12, "cabR": 513, "strip": 647, "cat": "xr", "src": "img/bt50.png", "thumb": "img/thumb/bt50.png"}, {"id": "bt50m", "name": "BT-50 + 모니터", "w": 525, "h": 1196, "s": 2, "cabL": 12, "cabR": 513, "strip": 647, "cat": "xr", "src": "img/bt50m.png", "thumb": "img/thumb/bt50m.png"}, {"id": "cv50", "name": "CV-50 (XR 1대)", "w": 264, "h": 603, "s": 1, "cabL": 8, "cabR": 255, "strip": 327, "cat": "xr", "src": "img/cv50.png", "thumb": "img/thumb/cv50.png"}, {"id": "cv50m", "name": "CV-50 + 모니터", "w": 357, "h": 603, "s": 1, "cabL": 101, "cabR": 348, "strip": 327, "cat": "xr", "src": "img/cv50m.png", "thumb": "img/thumb/cv50m.png"}, {"id": "cv55", "name": "CV-55 (XR 2대)", "w": 401, "h": 601, "s": 1, "cabL": 9, "cabR": 396, "strip": 325, "cat": "xr", "src": "img/cv55.png", "thumb": "img/thumb/cv55.png"}, {"id": "cv55m", "name": "CV-55 + 모니터", "w": 519, "h": 603, "s": 1, "cabL": 126, "cabR": 514, "strip": 327, "cat": "xr", "src": "img/cv55m.png", "thumb": "img/thumb/cv55m.png"}, {"id": "gr01", "name": "GR-01", "w": 784, "h": 1121, "s": 2, "cabL": 49, "cabR": 721, "strip": 571, "cat": "xr", "src": "img/gr01.png", "thumb": "img/thumb/gr01.png"}, {"id": "sp50", "name": "SP-50", "w": 707, "h": 1192, "s": 2, "cabL": 14, "cabR": 691, "strip": 643, "cat": "xr", "src": "img/sp50.png", "thumb": "img/thumb/sp50.png"}, {"id": "sp50di60", "name": "SP-50+DI-60", "w": 835, "h": 604, "s": 1, "cabL": 159, "cabR": 834, "strip": 328, "cat": "xr", "src": "img/sp50di60.png", "thumb": "img/thumb/sp50di60.png"}, {"id": "cv70", "name": "CV-70", "w": 252, "h": 356, "s": 1, "cabL": 2, "cabR": 251, "strip": 80, "cat": "xr", "src": "img/cv70.png", "thumb": "img/thumb/cv70.png"}, {"id": "ts10", "name": "TS-10", "w": 1210, "h": 1322, "s": 2, "cabL": 5, "cabR": 1203, "strip": 772, "cat": "xr", "src": "img/ts10.png", "thumb": "img/thumb/ts10.png"}, {"id": "ta01", "name": "TA-01", "w": 524, "h": 1196, "s": 2, "cabL": 12, "cabR": 512, "strip": 647, "cat": "xr", "src": "img/ta01.png", "thumb": "img/thumb/ta01.png"}, {"id": "ts01", "name": "TS-01", "w": 153, "h": 604, "s": 1, "cabL": 0, "cabR": 150, "strip": 328, "cat": "xr", "src": "img/ts01.png", "thumb": "img/thumb/ts01.png"}, {"id": "bsw1", "name": "BSW (CN 1대)", "w": 830, "h": 531, "s": 1, "cabL": 2, "cabR": 822, "strip": 255, "cat": "xr", "src": "img/bsw1.png", "thumb": "img/thumb/bsw1.png"}, {"id": "bsw2", "name": "BSW (CN 2대)", "w": 1335, "h": 531, "s": 1, "cabL": 2, "cabR": 1327, "strip": 255, "cat": "xr", "src": "img/bsw2.png", "thumb": "img/thumb/bsw2.png"}, {"id": "bsw3", "name": "BSW (CN 3대)", "w": 1839, "h": 531, "s": 1, "cabL": 2, "cabR": 1830, "strip": 255, "cat": "xr", "src": "img/bsw3.png", "thumb": "img/thumb/bsw3.png"}, {"id": "bswst", "name": "ST-4X 2대 (BSW)", "w": 226, "h": 358, "s": 1, "cabL": 2, "cabR": 218, "strip": 82, "cat": "xr", "src": "img/bswst.png", "thumb": "img/thumb/bswst.png"}, {"id": "uf5000", "name": "UF-5000", "w": 500, "h": 683, "s": 2, "cabL": 0, "cabR": 499, "strip": 560, "cat": "uf", "sepH": 122, "src": "img/uf5000.png", "thumb": "img/thumb/uf5000.png"}, {"id": "uc3500", "name": "UC-3500", "w": 512, "h": 566, "s": 2, "cabL": 0, "cabR": 511, "strip": 444, "cat": "uf", "sepH": 122, "src": "img/uc3500.png", "thumb": "img/thumb/uc3500.png"}, {"id": "ud10", "name": "UD-10", "w": 504, "h": 688, "s": 2, "cabL": 0, "cabR": 503, "strip": 565, "cat": "uf", "sepH": 122, "src": "img/ud10.png", "thumb": "img/thumb/ud10.png"}, {"id": "st1x", "name": "ST-1X", "w": 124, "h": 62, "s": 1, "cabL": 0, "cabR": 123, "strip": 0, "cat": "uf", "sepH": 61, "src": "img/st1x.png", "thumb": "img/thumb/st1x.png"}, {"id": "uwam", "name": "U-WAM", "w": 380, "h": 427, "s": 2, "cabL": 0, "cabR": 379, "strip": 285, "cat": "uf", "lift": 0, "sepH": 0, "src": "img/uwam.png", "thumb": "img/thumb/uwam.png"}];
+const M = Object.fromEntries(MODS.map(m=>[m.id,m]));
+const IMG = {};
+const nameOf = id => M[id].name;
+let cat='xr';
+const lines={xr:[],uf:[]};
+let line = lines.xr;          // 실제 좌→우 순서 (카테고리별 보관)
+let dirRight = true;    // 입력 방향: true = 우측부터
+
+const $ = s => document.querySelector(s);
+// 이미지는 백그라운드로 로드하고, 목록은 즉시 표시 (모바일에서 로드 지연/실패 시 목록이 비는 문제 방지)
+function loadAll(){ return Promise.all(MODS.map(m=>new Promise(r=>{const i=new Image(); i.onload=()=>{IMG[m.id]=i;r();}; i.onerror=()=>r(); i.src=m.src;}))); }
+
+function renderPalette(){
+  const p=$('#palette'); p.innerHTML='';
+  const list=MODS.filter(m=>(m.cat||'xr')===cat);
+  if(!list.length){ p.innerHTML='<div class="meta" style="padding:12px">이 카테고리에는 아직 모듈이 없습니다. 장비 사진을 주시면 추가됩니다.</div>'; }
+  list.forEach(m=>{
+    const d=document.createElement('div'); d.className='pal'; d.draggable=true; d.dataset.id=m.id;
+    d.innerHTML=`<img src="${m.thumb}"><div class="nm"><div class="t">${nameOf(m.id)}</div><div class="id">${m.overlay?'부착형 (폭 차지 없음)':(m.cabR-m.cabL)+' × '+m.h+' px'}</div></div><button title="추가">+</button>`;
+    d.querySelector('button').onclick=(e)=>{e.stopPropagation();add(m.id);};
+    d.addEventListener('click',()=>add(m.id));
+    // iOS Safari: div 클릭 이벤트가 누락되는 경우 대비 — 터치 탭(스크롤 아님)으로도 추가
+    let tx=0,ty=0,tt=0;
+    d.addEventListener('touchstart',e=>{const t=e.touches[0]; tx=t.clientX; ty=t.clientY; tt=Date.now();},{passive:true});
+    d.addEventListener('touchend',e=>{const t=e.changedTouches[0]; if(Math.abs(t.clientX-tx)<10&&Math.abs(t.clientY-ty)<10&&Date.now()-tt<500){ e.preventDefault(); add(m.id); }});
+    d.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain','new:'+m.id);});
+    p.appendChild(d);
+  });
+}
+function add(id){ dirRight ? line.unshift(id) : line.push(id); renderLine(); }
+function renderLine(){
+  const l=$('#line'); l.innerHTML='';
+  // 화면은 항상 좌→우 실제 배치 순서로 표시
+  line.forEach((id,i)=>{
+    const c=document.createElement('div'); c.className='chip'; c.draggable=true; c.dataset.idx=i;
+    const pos = dirRight ? line.length-i : i+1;
+    c.innerHTML=`<img src="${M[id].thumb}"><div><div class="t">${nameOf(id)}</div><div class="n">${dirRight?'우측':'좌측'}에서 ${pos}번째</div></div>
+      <div class="ops"><button data-op="l" title="왼쪽으로">◀</button><button data-op="r" title="오른쪽으로">▶</button><button data-op="x" title="삭제">✕</button></div>`;
+    c.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const op=b.dataset.op;
+      if(op==='x') line.splice(i,1);
+      else if(op==='l'&&i>0) [line[i-1],line[i]]=[line[i],line[i-1]];
+      else if(op==='r'&&i<line.length-1) [line[i+1],line[i]]=[line[i],line[i+1]];
+      renderLine();
+    });
+    c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain','move:'+i); c.classList.add('dragging');});
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+    l.appendChild(c);
+  });
+  draw();
+}
+// 드롭 처리: 포인터 위치(행/열 고려)로 삽입 인덱스 계산 + 삽입 위치 표시선
+const lineEl=$('#line');
+function dropIndex(e){
+  const chips=[...lineEl.querySelectorAll('.chip')]; if(!chips.length) return 0;
+  const rects=chips.map(c=>c.getBoundingClientRect());
+  // 포인터가 속한 행(세로 범위) 찾기 — 없으면 가장 가까운 행
+  let row=rects.filter(r=>e.clientY>=r.top-4 && e.clientY<=r.bottom+4);
+  if(!row.length){ const d=rects.map(r=>Math.min(Math.abs(e.clientY-r.top),Math.abs(e.clientY-r.bottom))); const near=rects[d.indexOf(Math.min(...d))]; row=rects.filter(r=>Math.abs(r.top-near.top)<4); }
+  for(const r of row){ if(e.clientX < r.left+r.width/2) return rects.indexOf(r); }
+  return rects.indexOf(row[row.length-1])+1;
+}
+function showMarker(idx){
+  let mk=lineEl.querySelector('.ins'); if(!mk){ mk=document.createElement('div'); mk.className='ins'; }
+  const chips=[...lineEl.querySelectorAll('.chip')];
+  if(idx>=chips.length) lineEl.appendChild(mk); else lineEl.insertBefore(mk, chips[idx]);
+}
+function hideMarker(){ const mk=lineEl.querySelector('.ins'); if(mk) mk.remove(); }
+lineEl.addEventListener('dragover',e=>{e.preventDefault(); lineEl.classList.add('over'); showMarker(dropIndex(e));});
+lineEl.addEventListener('dragleave',e=>{ if(!lineEl.contains(e.relatedTarget)){ lineEl.classList.remove('over'); hideMarker(); } });
+lineEl.addEventListener('drop',e=>{
+  e.preventDefault(); lineEl.classList.remove('over');
+  const idx0=dropIndex(e); hideMarker();
+  const data=e.dataTransfer.getData('text/plain'); if(!data) return;
+  let idx=idx0; const [kind,val]=data.split(':');
+  if(kind==='new'){ line.splice(idx,0,val); }
+  else { const from=+val; const id=line[from]; line.splice(from,1); if(idx>from) idx--; line.splice(idx,0,id); }
+  renderLine();
+});
+
+function layout(scale,pad,gap){
+  let x=pad; const items=[];
+  for(const id of line){
+    const m=M[id]; const k=scale/m.s;
+    const L=Math.round(m.cabL*k), R=Math.round(m.cabR*k);
+    const lift=Math.round((m.lift||0)*k);
+    items.push({id,k,x:x-L,w:Math.round(m.w*k),h:Math.round(m.h*k),lift,overlay:!!m.overlay});
+    if(!m.overlay) x+=R-L+gap;
+  }
+  // 왼쪽으로 튀어나온 부분(DI-60 모니터 등)이 잘리지 않도록 전체를 오른쪽으로 밀기
+  const minX=Math.min(pad,...items.map(i=>i.x)); const shift=pad-minX;
+  if(shift>0){ items.forEach(i=>i.x+=shift); x+=shift; }
+  const W=Math.max(1,x-gap+pad,...items.map(i=>i.x+i.w+pad)), H=Math.max(1,Math.max(0,...items.map(i=>i.h+i.lift))+2*pad);
+  return {items,W,H};
+}
+function applyZoom(cv,W,H,scale){
+  const z=$('#zoom').value, pv=$('.preview');
+  if(z==='fit'){ pv.classList.remove('zoomed'); cv.style.width=''; cv.style.height=''; }
+  else { pv.classList.add('zoomed'); const f=parseFloat(z)/scale; cv.style.width=Math.round(W*f)+'px'; cv.style.height=Math.round(H*f)+'px'; }
+}
+function draw(){
+  const scale=+$('#scale').value, pad=+$('#pad').value, gap=0, transp=false;
+  const {items,W,H}=layout(scale,pad,gap);
+  const cv=$('#cv'); cv.width=W; cv.height=H; const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  if(!transp){ctx.fillStyle=$('#bgcol').value; ctx.fillRect(0,0,W,H);}
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  const rank=it=>it.overlay?2:(M[it.id].w-M[it.id].cabR>30?1:0); // 우측 오버행(DI-60) → 1, 모니터 같은 오버레이 → 2 (마지막에 그림)
+  const order=[...items].sort((a,b)=>rank(a)-rank(b));
+  for(const it of order){ const im=IMG[it.id]; if(im&&im.complete&&im.naturalWidth) ctx.drawImage(im,it.x,H-pad-it.h-it.lift,it.w,it.h); }
+  if($('#sep').checked){ // 캐비닛이 맞닿는 자리에 옅은 구분선
+    ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=Math.max(1,scale*0.8);
+    const solid=items.filter(i=>!i.overlay);
+    for(let i=1;i<solid.length;i++){ const m=M[solid[i].id]; const xs=solid[i].x+Math.round(m.cabL*solid[i].k)+0.5; if(m.sepH===0) continue; const topY=(m.sepH!=null)?(m.sepH+6*m.s):(m.strip-60*m.s); // 바닥에서 위로 올라가는 높이
+      ctx.beginPath(); ctx.moveTo(xs,H-pad-Math.round(30*m.s*solid[i].k)); ctx.lineTo(xs,H-pad-Math.round(topY*solid[i].k)); ctx.stroke(); }
+  }
+  applyZoom(cv,W,H,scale);
+  $('#info').textContent = line.length? `${W} × ${H} px · ${line.length}개 모듈` : '';
+}
+function fileName(){
+  const seq=(dirRight?[...line].reverse():line).map(nameOf).map(n=>n.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'')).join('_');
+  return `${cat.toUpperCase()}-line_${seq||'empty'}.png`;
+}
+$('#save').onclick=()=>{ if(!line.length) return; const url=$('#cv').toDataURL('image/png');
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(ios){ const w=window.open(); if(w){ w.document.write('<title>'+fileName()+'</title><img src="'+url+'" style="max-width:100%">'); w.document.close(); } else { location.href=url; } return; } // iOS: 이미지를 새 탭에 열어 길게 눌러 저장
+  const a=document.createElement('a'); a.download=fileName(); a.href=url; a.click(); };
+$('#copy').onclick=async()=>{ try{ const b=await new Promise(r=>$('#cv').toBlob(r,'image/png')); await navigator.clipboard.write([new ClipboardItem({'image/png':b})]); $('#info').textContent+='  · 복사됨 ✓'; }catch(e){ alert('클립보드 복사가 지원되지 않는 브라우저입니다. PNG 저장을 이용하세요.'); } };
+['#scale','#pad','#sep','#bgcol','#zoom'].forEach(s=>$(s).addEventListener('input',draw));
+$('#bgsel').addEventListener('change',e=>{ if(e.target.value!=='custom'){ $('#bgcol').value=e.target.value; } draw(); });
+$('#bgcol').addEventListener('input',()=>{ $('#bgsel').value='custom'; });
+$('#dirR').onclick=()=>{dirRight=true;$('#dirR').classList.add('on');$('#dirL').classList.remove('on');renderLine();};
+$('#dirL').onclick=()=>{dirRight=false;$('#dirL').classList.add('on');$('#dirR').classList.remove('on');renderLine();};
+$('#clear').onclick=()=>{line.length=0;renderLine();};
+document.querySelectorAll('.catbtn').forEach(btn=>btn.onclick=()=>{ cat=btn.dataset.cat; line=lines[cat];
+  document.querySelectorAll('.catbtn').forEach(x=>x.classList.toggle('on',x===btn));
+  $('#lineTitle').textContent=(cat==='xr'?'XR-System':'UF-System')+' 라인 구성'; renderPalette(); renderLine(); });
+// 프리셋은 좌→우 실제 배치 순서로 정의
+renderPalette(); renderLine();
+loadAll().then(()=>{ draw(); });
+window.addEventListener('error',e=>{ $('#info').textContent='오류: '+e.message; });
+</script></body></html>
